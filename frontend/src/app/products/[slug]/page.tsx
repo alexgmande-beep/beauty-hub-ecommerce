@@ -1,14 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { api, Product } from "@/lib/api";
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
+export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const [p, setP] = useState<(Product & { reviews: { id: string; rating: number; comment: string; user: { name: string } }[] }) | null>(null);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    api(`/products/${params.slug}`).then(setP).catch(() => setP(null));
-  }, [params.slug]);
+    api(`/products/${slug}`).then(setP).catch(() => setP(null));
+  }, [slug]);
 
   if (!p) return <p>A carregar...</p>;
 
