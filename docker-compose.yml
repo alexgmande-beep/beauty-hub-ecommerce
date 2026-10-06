@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: beauty
+      POSTGRES_PASSWORD: beauty
+      POSTGRES_DB: beautyhub
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+  backend:
+    build: { context: ., dockerfile: docker/Dockerfile.backend }
+    environment:
+      DATABASE_URL: ******db:5432/beautyhub
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      FRONTEND_URL: http://localhost:3000
+    ports: ["4000:4000"]
+    depends_on: [db]
+  frontend:
+    build: { context: ., dockerfile: docker/Dockerfile.frontend }
+    ports: ["3000:3000"]
+    depends_on: [backend]
+volumes:
+  pgdata:
