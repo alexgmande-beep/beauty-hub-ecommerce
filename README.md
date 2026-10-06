@@ -6,7 +6,7 @@ E-commerce de produtos de beleza femininos.
 - `backend/` Express + TypeScript + Prisma + JWT + Stripe
 - `database/` esquema PostgreSQL (Prisma)
 - `docker/` Dockerfiles; `docker-compose.yml` na raiz
-- `docs/` documentação da API
+- `docs/` documentação da API e [demo em HTML](docs/demo.html) (abrir no browser)
 
 ## Arranque rápido
 ```bash

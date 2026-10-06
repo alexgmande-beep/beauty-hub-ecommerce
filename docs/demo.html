@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BeautyHub — Demo</title>
+<style>
+:root{--brand:#d6336c;--light:#fde8ef}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;color:#222}
+header{background:var(--brand);color:#fff;display:flex;gap:1.5rem;align-items:center;padding:1rem}
+header b{font-size:1.3rem}header .sp{flex:1}
+header a{color:#fff;cursor:pointer;text-decoration:none}
+main{max-width:1000px;margin:auto;padding:1rem}
+.hero{background:var(--light);border-radius:16px;padding:2.5rem;text-align:center}
+.hero h1{color:var(--brand);margin:0}
+button{background:var(--brand);color:#fff;border:0;border-radius:6px;padding:.5rem 1rem;cursor:pointer}
+button.o{background:#fff;color:#222;border:1px solid #ccc}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-top:1rem}
+.card{border:1px solid #e5e5e5;border-radius:12px;padding:1rem}
+.card .img{height:110px;border-radius:8px;background:var(--light);display:grid;place-items:center;font-size:2.5rem}
+.price{color:var(--brand);font-weight:700}
+.cats{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.cats button{background:#fff;color:#222;border:1px solid #ccc}
+.cats button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+input{padding:.5rem;border:1px solid #ccc;border-radius:6px;width:100%}
+.row{display:flex;align-items:center;gap:1rem;border-bottom:1px solid #eee;padding:.5rem 0}
+.row span:first-child{flex:1}
+.hidden{display:none}
+.steps{display:flex;gap:.5rem;margin-bottom:1rem}
+.steps div{flex:1;text-align:center;padding:.4rem;border-radius:6px;background:#eee}
+.steps .on{background:var(--brand);color:#fff}
+footer{text-align:center;color:#888;padding:2rem;font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+  <b>🌸 BeautyHub</b>
+  <a onclick="show('home')">Início</a><a onclick="show('shop')">Produtos</a>
+  <span class="sp"></span>
+  <a onclick="show('cart')">🛒 Carrinho (<span id="cnt">0</span>)</a>
+</header>
+<main>
+<section id="home">
+  <div class="hero"><h1>Realce a sua beleza</h1>
+    <p>Maquilhagem, cuidados de pele e perfumes entregues em sua casa.</p>
+    <button onclick="show('shop')">Ver produtos</button></div>
+  <div class="grid" id="homecats"></div>
+</section>
+
+<section id="shop" class="hidden">
+  <input id="q" placeholder="🔍 Pesquisar (autocompletar)..." oninput="render()">
+  <div class="cats" id="cats"></div>
+  <div class="grid" id="products"></div>
+</section>
+
+<section id="cart" class="hidden">
+  <h2>Carrinho</h2><div id="items"></div>
+  <p><b>Total: <span id="total">0.00</span> €</b></p>
+  <button onclick="show('checkout')">Finalizar compra</button>
+</section>
+
+<section id="checkout" class="hidden">
+  <h2>Checkout</h2>
+  <div class="steps"><div id="s1" class="on">1. Morada</div><div id="s2">2. Pagamento</div><div id="s3">3. Revisão</div></div>
+  <div id="step1"><input placeholder="Rua"><br><br><input placeholder="Cidade"><br><br>
+    <button onclick="step(2)">Seguinte</button></div>
+  <div id="step2" class="hidden"><input placeholder="Cupão (ex: WELCOME10)" id="coupon"><br><br>
+    <input placeholder="Cartão (Stripe) — demo"><br><br><button onclick="step(3)">Seguinte</button></div>
+  <div id="step3" class="hidden"><p id="review"></p><button onclick="done()">Confirmar pedido</button></div>
+  <p id="ok" class="hidden"><b>✅ Pedido confirmado! (simulação)</b> Receberá um email com o rastreio.</p>
+</section>
+</main>
+<footer>Demo estática — a app real usa Next.js + Express + PostgreSQL + Stripe.</footer>
+
+<script>
+const P=[
+ {id:1,n:"Batom Rosa",b:"BeautyHub",p:12.9,c:"Maquilhagem",e:"💄"},
+ {id:2,n:"Base Líquida",b:"Glow",p:24.5,c:"Maquilhagem",e:"🧴"},
+ {id:3,n:"Sérum Vitamina C",b:"Glow",p:29.9,c:"Cuidados de Pele",e:"✨"},
+ {id:4,n:"Creme Hidratante",b:"PureSkin",p:18.0,c:"Cuidados de Pele",e:"🧴"},
+ {id:5,n:"Eau de Parfum Rose",b:"Flora",p:49.0,c:"Perfumes",e:"🌹"},
+ {id:6,n:"Máscara de Pestanas",b:"BeautyHub",p:14.2,c:"Maquilhagem",e:"👁️"}
+];
+const C=["Todas",...new Set(P.map(p=>p.c))];
+let cat="Todas",cart={},disc=0;
+const $=id=>document.getElementById(id);
+function show(id){["home","shop","cart","checkout"].forEach(s=>$(s).classList.toggle("hidden",s!==id));if(id==="cart")renderCart();if(id==="checkout")step(1)}
+function render(){
+  $("cats").innerHTML=C.map(c=>`<button class="${c===cat?"on":""}" onclick="cat='${c}';render()">${c}</button>`).join("");
+  const q=$("q").value.toLowerCase();
+  $("products").innerHTML=P.filter(p=>(cat==="Todas"||p.c===cat)&&p.n.toLowerCase().includes(q)).map(p=>
+   `<div class="card"><div class="img">${p.e}</div><div><b>${p.n}</b></div><small>${p.b}</small>
+    <div class="price">${p.p.toFixed(2)} €</div><br><button onclick="add(${p.id})">Adicionar</button></div>`).join("");
+}
+$("homecats").innerHTML=C.slice(1).map(c=>`<div class="card" style="text-align:center;cursor:pointer" onclick="cat='${c}';show('shop');render()">${c}</div>`).join("");
+function add(id){cart[id]=(cart[id]||0)+1;count()}
+function chg(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];count();renderCart()}
+function count(){$("cnt").textContent=Object.values(cart).reduce((a,b)=>a+b,0)}
+function sum(){return Object.entries(cart).reduce((s,[id,q])=>s+P.find(p=>p.id==id).p*q,0)}
+function renderCart(){
+  $("items").innerHTML=Object.entries(cart).map(([id,q])=>{const p=P.find(x=>x.id==id);
+   return `<div class="row"><span>${p.e} ${p.n}</span><button class="o" onclick="chg(${id},-1)">−</button>${q}<button class="o" onclick="chg(${id},1)">+</button><span>${(p.p*q).toFixed(2)} €</span></div>`}).join("")||"<p>Vazio.</p>";
+  $("total").textContent=sum().toFixed(2);
+}
+function step(n){
+  [1,2,3].forEach(i=>{$("step"+i).classList.toggle("hidden",i!==n);$("s"+i).classList.toggle("on",i<=n)});
+  $("ok").classList.add("hidden");
+  if(n===3){disc=$("coupon").value.trim().toUpperCase()==="WELCOME10"?.1:0;
+    $("review").textContent=`Total: ${(sum()*(1-disc)).toFixed(2)} €`+(disc?" (cupão -10%)":"")}
+}
+function done(){cart={};count();["step1","step2","step3"].forEach(i=>$(i).classList.add("hidden"));$("ok").classList.remove("hidden")}
+render();
+</script>
+</body>
+</html>
